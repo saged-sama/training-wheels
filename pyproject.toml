@@ -8,14 +8,16 @@ dependencies = [
     "einops>=0.8.2",
     "jaxtyping>=0.3.7",
     "numpy>=2.4.2",
+    "pybind11>=3.0.1",
     "pytest>=9.0.2",
+    "setuptools>=82.0.0",
     "torch>=2.10.0",
     "tqdm>=4.67.3",
 ]
 
 [build-system]
-requires = ["uv_build"]
-build-backend = "uv_build"
+requires = ["uv_build", "setuptools", "pybind11"]
+build-backend = "setuptools.build_meta"
 
 [tool.uv.build-backend]
 module-name = "therapml"

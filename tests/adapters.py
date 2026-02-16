@@ -2,6 +2,8 @@ from typing import Any
 from jaxtyping import Float, Int, Bool
 
 from torch import Tensor
+import therapml_cpp
+import numpy as np
 
 
 def run_tensor_multiply(arr1: Float[list, "b x y"], arr2: Float[list, "b y z"]) -> Float[list, "b x z"]:
