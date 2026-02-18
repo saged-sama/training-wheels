@@ -4,7 +4,7 @@ from jaxtyping import Float, Int, Bool
 from torch import Tensor
 import therapml_cpp
 import numpy as np
-from therapml.training.sgd import SGDProxy
+from therapml.training.sgd import SGD
 
 
 def run_tensor_multiply(arr1: Float[list, "b x y"], arr2: Float[list, "b y z"]) -> Float[list, "b x z"]:
@@ -16,7 +16,7 @@ def run_tensor_dot(arr1: Float[list, "..."], arr2: Float[list, "..."], dim: int)
 
 
 def get_sgd_cls() -> Any:
-    raise NotImplementedError
+    return SGD
 
 
 def get_adam_cls() -> Any:
