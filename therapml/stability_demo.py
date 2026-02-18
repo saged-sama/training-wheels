@@ -5,7 +5,7 @@ def lse(arr):
     sum = max_val + np.log(np.sum(np.exp(arr - max_val)))
     return sum
 
-def underflow_sim(n = 1000, low=0.0, high=1.0):
+def stability_demo(n = 1000, low=0.0, high=1.0):
     arr = np.random.uniform(low=low, high=high, size=n)
 
     product = np.prod(arr)
@@ -28,4 +28,4 @@ def underflow_sim(n = 1000, low=0.0, high=1.0):
     print(f"Exponential of Log-Sum-Exp: {log_sum_exp_sum}")
 
 if __name__ == "__main__":
-    underflow_sim(n=1000, low=1.0e-10, high=1.0e-5)
+    stability_demo(n=1000, low=1.0e-10, high=1.0e-5)

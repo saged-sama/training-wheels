@@ -38,7 +38,7 @@ class MatrixOps {
     int unroll_factor;
     bool gpu_enabled;
 
-    MatrixOps(int threshold = 64, bool unrolled = false, int unroll_factor = 4, bool gpu_enabled = false) : threshold(threshold), unrolled(unrolled), unroll_factor(unroll_factor), gpu_enabled(gpu_enabled) {}
+    MatrixOps(int threshold = 128, bool unrolled = true, int unroll_factor = 4, bool gpu_enabled = false) : threshold(threshold), unrolled(unrolled), unroll_factor(unroll_factor), gpu_enabled(gpu_enabled) {}
 
     void multipliability_check(Matrix &A, Matrix &B);
     void sumability_check(Matrix &A, Matrix &B);
