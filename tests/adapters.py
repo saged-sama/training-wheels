@@ -4,6 +4,7 @@ from jaxtyping import Float, Int, Bool
 from torch import Tensor
 import therapml_cpp
 import numpy as np
+from therapml.training.sgd import SGDProxy
 
 
 def run_tensor_multiply(arr1: Float[list, "b x y"], arr2: Float[list, "b y z"]) -> Float[list, "b x z"]:
