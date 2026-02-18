@@ -11,3 +11,17 @@ wheels/
 therapml_cpp.*
 *.out
 *.o
+# LaTeX compiler generated files
+*.aux
+*.log
+*.out
+*.pdf
+*.synctex.gz
+*.synctex*
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+*.toc
+*.lof
+*.lot
