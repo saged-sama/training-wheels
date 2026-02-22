@@ -6,6 +6,7 @@ import therapml_cpp
 import numpy as np
 from therapml.training.sgd import SGD
 from therapml.training.adam import AdamW
+from therapml.training.nn_blocks import ReLU, GELU
 
 
 def run_tensor_multiply(arr1: Float[list, "b x y"], arr2: Float[list, "b y z"]) -> Float[list, "b x z"]:
@@ -25,11 +26,11 @@ def get_adam_cls() -> Any:
 
 
 def run_relu(in_features: Float[Tensor, "..."]) -> Float[Tensor, "..."]:
-    raise NotImplementedError
+    return ReLU(in_features)
 
 
 def run_gelu(in_features: Float[Tensor, "..."]) -> Float[Tensor, "..."]:
-    raise NotImplementedError
+    return GELU(in_features)
 
 
 def run_softmax(in_features: Float[Tensor, "..."], dim: int) -> Float[Tensor, "..."]:
