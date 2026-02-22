@@ -5,6 +5,7 @@ from torch import Tensor
 import therapml_cpp
 import numpy as np
 from therapml.training.sgd import SGD
+from therapml.training.adam import AdamW
 
 
 def run_tensor_multiply(arr1: Float[list, "b x y"], arr2: Float[list, "b y z"]) -> Float[list, "b x z"]:
@@ -20,7 +21,7 @@ def get_sgd_cls() -> Any:
 
 
 def get_adam_cls() -> Any:
-    raise NotImplementedError
+    return AdamW
 
 
 def run_relu(in_features: Float[Tensor, "..."]) -> Float[Tensor, "..."]:
