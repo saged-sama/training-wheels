@@ -6,15 +6,20 @@ import therapml_cpp
 import numpy as np
 from therapml.training.sgd import SGD
 from therapml.training.adam import AdamW
-from therapml.training.nn_blocks import ReLU, GELU
+from therapml.training.nn_blocks import ReLU, GELU_tanh, GELU_erf, SoftMax
 
 
 def run_tensor_multiply(arr1: Float[list, "b x y"], arr2: Float[list, "b y z"]) -> Float[list, "b x z"]:
-    raise NotImplementedError
+    a = np.ascontiguousarray(arr1, dtype=np.float64)
+    b = np.ascontiguousarray(arr2, dtype=np.float64)
+    return therapml_cpp.run_tensor_multiply(a, b)
 
 
 def run_tensor_dot(arr1: Float[list, "..."], arr2: Float[list, "..."], dim: int):
-    raise NotImplementedError
+    result = therapml_cpp.run_tensor_dot(arr1, arr2, dim)
+    if isinstance(result, np.ndarray) and result.shape == ():
+        return result.item()
+    return result
 
 
 def get_sgd_cls() -> Any:
@@ -30,11 +35,11 @@ def run_relu(in_features: Float[Tensor, "..."]) -> Float[Tensor, "..."]:
 
 
 def run_gelu(in_features: Float[Tensor, "..."]) -> Float[Tensor, "..."]:
-    return GELU(in_features)
+    return GELU_tanh(in_features)
 
 
 def run_softmax(in_features: Float[Tensor, "..."], dim: int) -> Float[Tensor, "..."]:
-    raise NotImplementedError
+    return SoftMax(in_features, dim=dim)
 
 
 def run_linear(
