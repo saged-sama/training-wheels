@@ -52,5 +52,4 @@ class AdamW(torch.optim.Optimizer):
                 p.addcdiv_(exp_avg, denom, value=-step_size)
 
         return loss
-    pass
 

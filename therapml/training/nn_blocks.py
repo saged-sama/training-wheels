@@ -6,75 +6,61 @@ from torch import Tensor
 from jaxtyping import Float
 import torch.nn.functional as F
 
-def ReLU(tensor):
-    return np.where(tensor > 0, tensor, 0)
-
-def GELU_tanh(tensor):
-    return 0.5 * tensor * (1 + np.tanh(np.sqrt(2.0/np.pi) * (tensor + 0.044715 * (tensor**3))))
-
-def GELU_erf(tensor):
-    return 0.5 * tensor * (1 + torch.erf(tensor / torch.sqrt(torch.tensor(2.0))))
-
-def SoftMax(tensor, dim):
-    max_val = torch.max(tensor, dim=dim, keepdim=True).values
-
-    exp_tensor = torch.exp(tensor-max_val)
-    sum_exp = torch.sum(exp_tensor, dim=dim, keepdim=True)
-
-    return exp_tensor / sum_exp
-
-class Linear:
-    def __init__(self, in_features, out_features, weight=None):
-        self.in_features = in_features
-        self.out_features = out_features
-
-        if weight is None:
-            self.weight = torch.empty(out_features, in_features)
-        else:
-            self.weight = weight
+class ReLU(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
 
     def forward(self, x):
-        return x @ self.weight.T
+        return torch.clamp(x, min=0.0, max=None)
 
-    def __call__(self, x):
-        return self.forward(x)
-    
+class GELU(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
 
-class LinearKaiming:
-    def __init__(self, in_features, out_features):
-        self.in_features = in_features
-        self.out_features = out_features
+    def forward(self, x):
+        return 0.5 * x * (1 + torch.erf(x / torch.sqrt(torch.tensor(2.0))))
 
-        self.weight = torch.empty(out_features, in_features)
-        self.bias = torch.zeros(out_features)
+class SoftMax(torch.nn.Module):
+    def __init__(self, dim=-1):
+        super().__init__()
+        self.dim = dim
 
-        self.reset_parameters()
+    def forward(self, x):
+        max_val = torch.max(x, dim=self.dim, keepdim=True).values
 
-    def reset_parameters(self):
-        fan_in = self.in_features
-        std = math.sqrt(2.0 / fan_in)
-        with torch.no_grad():
-            self.weight.normal_(0, std)
-            self.bias.zero_()
+        exp_tensor = torch.exp(x-max_val)
+        sum_exp = torch.sum(exp_tensor, dim=self.dim, keepdim=True)
+
+        return exp_tensor / sum_exp
+
+class Linear(torch.nn.Module):
+    def __init__(self, in_features, out_features, weight=None, bias=None):
+        super().__init__()
+        if weight is None:
+            self.weights = torch.nn.Parameter(torch.randn(in_features, out_features))
+        else:
+            self.weight = weight
+        if bias is None:
+            self.bias = torch.nn.Parameter(torch.zeros(out_features))
+        else:
+            self.bias = bias
 
     def forward(self, x):
         return x @ self.weight.T + self.bias
+    
+class SwiGLU(torch.nn.Module):
+    def __init__(self, d_model, d_ff, w1_weight, w2_weight, w3_weight):
+        super().__init__()
+        self.d_model = d_model
+        self.d_ff = d_ff
+        self.w1_weight = w1_weight
+        self.w2_weight = w2_weight
+        self.w3_weight = w3_weight
+    
+    def forward(self, x):
+        gate = x @ self.w1_weight.T
+        silu = F.silu(gate)
+        data = x @ self.w3_weight.T
 
-    def __call__(self, x):
-        return self.forward(x)
-
-def SwiGLU(
-        d_model: int,
-        d_ff: int,
-        w1_weight: Float[Tensor, " d_ff d_model"],
-        w2_weight: Float[Tensor, " d_model d_ff"],
-        w3_weight: Float[Tensor, " d_ff d_model"],
-        in_features: Float[Tensor, " ... d_model"]
-    ):
-    gate = in_features @ w1_weight.T
-    silu = F.silu(gate)
-    data = in_features @ w3_weight.T
-
-    swiglu = silu * data
-
-    return swiglu @ w2_weight.T
+        swiglu = silu * data
+        return swiglu @ self.w2_weight.T
