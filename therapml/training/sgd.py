@@ -1,6 +1,6 @@
-import torch
+import torch.optim as optim
 
-class SGD(torch.optim.Optimizer):
+class SGD(optim.Optimizer):
     def __init__(self, params, lr=1e-3, weight_decay=0.0):
         defaults = dict(
             lr=lr,
@@ -8,7 +8,6 @@ class SGD(torch.optim.Optimizer):
         )
         super().__init__(params=params, defaults=defaults)
 
-    # @torch.no_grad()
     def step(self, closure=None):
         loss = None
         if closure is not None:
