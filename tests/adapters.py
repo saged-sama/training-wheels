@@ -6,7 +6,7 @@ import therapml_cpp
 import numpy as np
 from therapml.training.sgd import SGD
 from therapml.training.adam import AdamW
-from therapml.training.nn_blocks import ReLU, GELU_tanh, GELU_erf, SoftMax
+from therapml.training.nn_blocks import ReLU, GELU_tanh, GELU_erf, SoftMax, Linear, SwiGLU
 
 
 def run_tensor_multiply(arr1: Float[list, "b x y"], arr2: Float[list, "b y z"]) -> Float[list, "b x z"]:
@@ -48,7 +48,9 @@ def run_linear(
     weights: Float[Tensor, "d_out d_in"],
     in_features: Float[Tensor, "... d_in"],
 ) -> Float[Tensor, "... d_out"]:
-    raise NotImplementedError
+    custom_linear = Linear(d_in, d_out, weight=weights)
+
+    return custom_linear(in_features)
 
 
 def run_swiglu(
@@ -59,7 +61,7 @@ def run_swiglu(
     w3_weight: Float[Tensor, " d_ff d_model"],
     in_features: Float[Tensor, " ... d_model"],
 ) -> Float[Tensor, " ... d_model"]:
-    raise NotImplementedError
+    return SwiGLU(d_model=d_model, d_ff=d_ff, w1_weight=w1_weight, w2_weight=w2_weight, w3_weight=w3_weight, in_features=in_features)
 
 
 def run_cross_entropy_loss(
