@@ -8,6 +8,13 @@ class ReLU(nn.Module):
 
     def forward(self, x):
         return torch.clamp(x, min=0.0, max=None)
+    
+class Sigmoid(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, x):
+        return 1 / (1 + torch.exp(-x))
 
 class GELU(nn.Module):
     def __init__(self):
@@ -28,14 +35,27 @@ class SoftMax(nn.Module):
         sum_exp = torch.sum(exp_tensor, dim=self.dim, keepdim=True)
 
         return exp_tensor / sum_exp
-
+    
 class Linear(nn.Module):
     def __init__(self, in_features, out_features):
         super().__init__()
-        self.weights = nn.Parameter(torch.randn(out_features, in_features))
+        fan_in = in_features * 4
+        std = torch.sqrt(torch.tensor(2.0 / fan_in))
+        self.weights = nn.Parameter(torch.randn(out_features, in_features) * std)
 
     def forward(self, x):
         return x @ self.weights.T
+    
+class BiasLinear(nn.Module):
+    def __init__(self, in_features, out_features):
+        super().__init__()
+        fan_in = in_features * 4
+        std = torch.sqrt(torch.tensor(2.0 / fan_in))
+        self.weights = nn.Parameter(torch.randn(out_features, in_features) * std)
+        self.bias = nn.Parameter(torch.zeros(out_features))
+
+    def forward(self, x):
+        return x @ self.weights.T + self.bias
     
 class SwiGLU(nn.Module):
     def __init__(self, d_model, d_ff, w1_weight, w2_weight, w3_weight):
