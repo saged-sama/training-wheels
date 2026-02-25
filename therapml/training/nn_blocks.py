@@ -30,19 +30,12 @@ class SoftMax(nn.Module):
         return exp_tensor / sum_exp
 
 class Linear(nn.Module):
-    def __init__(self, in_features, out_features, weight=None, bias=None):
+    def __init__(self, in_features, out_features):
         super().__init__()
-        if weight is None:
-            self.weights = nn.Parameter(torch.randn(in_features, out_features))
-        else:
-            self.weight = weight
-        if bias is None:
-            self.bias = nn.Parameter(torch.zeros(out_features))
-        else:
-            self.bias = bias
+        self.weights = nn.Parameter(torch.randn(out_features, in_features))
 
     def forward(self, x):
-        return x @ self.weight.T + self.bias
+        return x @ self.weights.T
     
 class SwiGLU(nn.Module):
     def __init__(self, d_model, d_ff, w1_weight, w2_weight, w3_weight):
