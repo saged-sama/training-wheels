@@ -22,6 +22,19 @@ class GELU(nn.Module):
 
     def forward(self, x):
         return 0.5 * x * (1 + torch.erf(x / torch.sqrt(torch.tensor(2.0))))
+    
+class GELU_SIGMOID_AVERAGE(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.sigmoid = nn.Sigmoid()
+        self.gelu = nn.GELU() 
+
+    def forward(self, x):
+        s = self.sigmoid(x)
+        g = self.gelu(x)
+        # denom = s + g + 1e-8
+        
+        return torch.sqrt((s/2.0) * s + (g/2.0) * g)
 
 class SoftMax(nn.Module):
     def __init__(self, dim=-1):

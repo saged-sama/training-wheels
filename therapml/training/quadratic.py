@@ -3,23 +3,23 @@ import torch.nn as nn
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from nn_blocks import ReLU, BiasLinear, SoftMax, GELU, Sigmoid
+from nn_blocks import ReLU, BiasLinear, SoftMax, GELU, Sigmoid, GELU_SIGMOID_AVERAGE
 from adam import AdamW
 from sgd import SGD
 
 from matplotlib import rc
 rc('animation', html='jshtml')
 
-X = torch.linspace(-2, 2, 1000)
+X = torch.linspace(-10, 10, 1000)
 Y = torch.pow(X, 2)
 
 model = nn.Sequential(
-    BiasLinear(1, 10),
+    BiasLinear(1, 100),
     GELU(),
-    BiasLinear(10, 1)
+    BiasLinear(100, 1)
 )
 
-adamW = AdamW(model.parameters(), lr=0.1)
+adamW = AdamW(model.parameters(), lr=0.01)
 # sgd = SGD(model.parameters(), lr=0.1)
 
 snapshots_every_20_epoch = []
@@ -50,8 +50,8 @@ line, = ax.plot([], [], 'b-', label='Prediction', linewidth=2)
 ax.plot(X, Y, 'r--', label='Target x²', alpha=0.5, linewidth=2)
 ax.legend(fontsize=12)
 ax.grid(True, alpha=0.3)
-ax.set_xlim(-2, 2)
-ax.set_ylim(-1, 5)
+ax.set_xlim(-10, 10)
+ax.set_ylim(-1, 20)
 ax.set_xlabel('x', fontsize=12)
 ax.set_ylabel('y', fontsize=12)
 

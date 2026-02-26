@@ -8,6 +8,7 @@ from therapml.training.sgd import SGD
 from therapml.training.adam import AdamW
 from therapml.training.nn_blocks import ReLU, GELU, SoftMax, Linear, SwiGLU
 from therapml.training.loss import CrossEntropyLoss
+from therapml.training.dropout import Dropout
 
 
 def run_tensor_multiply(arr1: Float[list, "b x y"], arr2: Float[list, "b y z"]) -> Float[list, "b x z"]:
@@ -77,7 +78,8 @@ def run_cross_entropy_loss(
 
 
 def run_dropout(input: Float[Tensor, "..."], prob: float) -> Float[Tensor, "..."]:
-    raise NotImplementedError
+    dropout = Dropout(prob)
+    return dropout(input)
 
 
 def run_layernorm(
