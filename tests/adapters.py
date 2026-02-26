@@ -9,6 +9,7 @@ from therapml.training.adam import AdamW
 from therapml.training.nn_blocks import ReLU, GELU, SoftMax, Linear, SwiGLU
 from therapml.training.loss import CrossEntropyLoss
 from therapml.training.dropout import Dropout
+from therapml.training.normalizers import LayerNorm, RMSNorm
 
 
 def run_tensor_multiply(arr1: Float[list, "b x y"], arr2: Float[list, "b y z"]) -> Float[list, "b x z"]:
@@ -85,11 +86,13 @@ def run_dropout(input: Float[Tensor, "..."], prob: float) -> Float[Tensor, "..."
 def run_layernorm(
     input: Float[Tensor, "batch ..."], gamma: Float[Tensor, "batch ..."], beta: Float[Tensor, "batch ..."]
 ) -> Float[Tensor, "batch ..."]:
-    raise NotImplementedError
+    layer_norm = LayerNorm(gamma=gamma, beta=beta)
+    return layer_norm(input)
 
 
 def run_rmsnorm(input: Float[Tensor, "batch ..."], gamma: Float[Tensor, "batch ..."]) -> Float[Tensor, "batch ..."]:
-    raise NotImplementedError
+    rms_norm = RMSNorm(gamma=gamma)
+    return rms_norm(input)
 
 
 def run_rope(
