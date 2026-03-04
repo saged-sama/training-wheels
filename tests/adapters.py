@@ -10,6 +10,7 @@ from therapml.training.nn_blocks import ReLU, GELU, SoftMax, Linear, SwiGLU
 from therapml.training.loss import CrossEntropyLoss
 from therapml.training.dropout import Dropout
 from therapml.training.normalizers import LayerNorm, RMSNorm
+from therapml.transformer import RoPE, SelfAttention
 
 
 def run_tensor_multiply(arr1: Float[list, "b x y"], arr2: Float[list, "b y z"]) -> Float[list, "b x z"]:
@@ -102,7 +103,8 @@ def run_rope(
     input_embeddings: Float[Tensor, "batch ctx_len embedding_dim"],
     token_positions: Int[Tensor, "batch ctx_len"],
 ) -> Float[Tensor, "batch ctx_len embedding_dim"]:
-    raise NotImplementedError
+    rope = RoPE(embedding_dim=embedding_dim, theta=theta, context_len=context_len)
+    return rope(input_embeddings, token_positions)
 
 
 def run_self_attention(
@@ -114,7 +116,9 @@ def run_self_attention(
     """
     Note the number of dimensions here can be greater than 3
     """
-    raise NotImplementedError
+    self_attention = SelfAttention(K, V, mask)
+
+    return self_attention(Q)
 
 
 def run_multihead_self_attention(
