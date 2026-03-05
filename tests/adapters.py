@@ -10,7 +10,7 @@ from therapml.training.nn_blocks import ReLU, GELU, SoftMax, Linear, SwiGLU
 from therapml.training.loss import CrossEntropyLoss
 from therapml.training.dropout import Dropout
 from therapml.training.normalizers import LayerNorm, RMSNorm
-from therapml.transformer import RoPE, SelfAttention
+from therapml.transformer import RoPE, SelfAttention, MultiHeadSelfAttention, MultiHeadSelfAttentionWithRope
 
 
 def run_tensor_multiply(arr1: Float[list, "b x y"], arr2: Float[list, "b y z"]) -> Float[list, "b x z"]:
@@ -130,7 +130,9 @@ def run_multihead_self_attention(
     o_proj_weight: Float[Tensor, "d_model d_v"],
     in_features: Float[Tensor, "batch ctx_len d_in"],
 ) -> Float[Tensor, "batch ctx_len d_out"]:
-    raise NotImplementedError
+    multi_self_att = MultiHeadSelfAttention(d_model=d_model, num_heads=num_heads, q_proj_weight=q_proj_weight, k_proj_weight=k_proj_weight, v_proj_weight=v_proj_weight, o_proj_weight=o_proj_weight)
+
+    return multi_self_att(in_features)
 
 
 def run_multihead_self_attention_with_rope(
@@ -145,8 +147,19 @@ def run_multihead_self_attention_with_rope(
     in_features: Float[Tensor, "batch ctx_len d_in"],
     token_positions: Int[Tensor, "batch ctx_len"],
 ) -> Float[Tensor, "batch ctx_len d_out"]:
-    raise NotImplementedError
+    
+    multi_head_with_rope = MultiHeadSelfAttentionWithRope(
+        d_model=d_model,
+        num_heads=num_heads,
+        ctx_len=ctx_len,
+        theta=theta,
+        q_proj_weight=q_proj_weight,
+        k_proj_weight=k_proj_weight,
+        v_proj_weight=v_proj_weight,
+        o_proj_weight=o_proj_weight
+    )
 
+    return multi_head_with_rope(in_features, token_positions)
 
 def run_transformer_block(
     d_model: int,

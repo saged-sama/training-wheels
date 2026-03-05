@@ -1,2 +1,2 @@
 from .rope import RoPE
-from .self_attention import SelfAttention
+from .self_attention import SelfAttention, MultiHeadSelfAttention, MultiHeadSelfAttentionWithRope
