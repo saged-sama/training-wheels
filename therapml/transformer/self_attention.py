@@ -4,6 +4,7 @@ import torch
 from torch import Tensor
 from jaxtyping import Float, Int
 from .rope import RoPE
+import math
 
 class SelfAttention(nn.Module):
     def __init__(self, K: Tensor, V: Tensor, mask):
@@ -25,11 +26,6 @@ class SelfAttention(nn.Module):
         output = attention_weights @ self.V
         
         return output
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import math
 
 class MultiHeadSelfAttention(nn.Module):
     def __init__(
@@ -136,16 +132,19 @@ class MultiHeadSelfAttentionWithRope(nn.Module):
 
         B, H, S, D = Q.shape
 
-        Q = Q.permute(0, 2, 1, 3).reshape(B * H, S, D)
-        K = K.permute(0, 2, 1, 3).reshape(B * H, S, D)
+        # Reshape for rope application: (B, H, S, D) -> (B*H, S, D)
+        Q = Q.reshape(B * H, S, D)
+        K = K.reshape(B * H, S, D)
 
-        positions = token_positions.repeat_interleave(H, dim=0)
+        # Expand positions to match batch size and repeat for heads
+        positions = token_positions.expand(B, -1).repeat_interleave(H, dim=0)
 
-        Q: Tensor = self.rope(Q, positions)
-        K: Tensor = self.rope(K, positions)
+        Q = self.rope(Q, positions)
+        K = self.rope(K, positions)
 
-        Q = Q.view(B, H, S, D).permute(0, 1, 2, 3)
-        K = K.view(B, H, S, D).permute(0, 1, 2, 3)
+        # Reshape back: (B*H, S, D) -> (B, H, S, D)
+        Q = Q.reshape(B, H, S, D)
+        K = K.reshape(B, H, S, D)
 
         # Scaled dot-product attention
         scale = math.sqrt(self.head_dim)
