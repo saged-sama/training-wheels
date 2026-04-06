@@ -32,10 +32,10 @@ class MultiHeadSelfAttention(nn.Module):
         self,
         d_model: int,
         num_heads: int,
-        q_proj_weight: torch.Tensor,
-        k_proj_weight: torch.Tensor,
-        v_proj_weight: torch.Tensor,
-        o_proj_weight: torch.Tensor
+        q_proj_weight: torch.Tensor = None,
+        k_proj_weight: torch.Tensor = None,
+        v_proj_weight: torch.Tensor = None,
+        o_proj_weight: torch.Tensor = None
     ):
         super().__init__()
 
@@ -43,6 +43,15 @@ class MultiHeadSelfAttention(nn.Module):
         self.num_heads = num_heads
 
         # Should ideally be nn.Parameter if trainable
+        if q_proj_weight is None:
+            q_proj_weight = torch.randn(d_model, d_model) / math.sqrt(d_model)
+        if k_proj_weight is None:
+            k_proj_weight = torch.randn(d_model, d_model) / math.sqrt(d_model)
+        if v_proj_weight is None:
+            v_proj_weight = torch.randn(d_model, d_model) / math.sqrt(d_model)
+        if o_proj_weight is None:
+            o_proj_weight = torch.randn(d_model, d_model) / math.sqrt(d_model)
+        
         self.q_proj_weight = nn.Parameter(q_proj_weight)
         self.k_proj_weight = nn.Parameter(k_proj_weight)
         self.v_proj_weight = nn.Parameter(v_proj_weight)
@@ -110,6 +119,17 @@ class MultiHeadSelfAttentionWithRope(nn.Module):
         self.rope = RoPE(self.head_dim, theta, ctx_len)
 
         # Should ideally be nn.Parameter if trainable
+        
+        # Should ideally be nn.Parameter if trainable
+        if q_proj_weight is None:
+            q_proj_weight = torch.randn(d_model, d_model) / math.sqrt(d_model)
+        if k_proj_weight is None:
+            k_proj_weight = torch.randn(d_model, d_model) / math.sqrt(d_model)
+        if v_proj_weight is None:
+            v_proj_weight = torch.randn(d_model, d_model) / math.sqrt(d_model)
+        if o_proj_weight is None:
+            o_proj_weight = torch.randn(d_model, d_model) / math.sqrt(d_model)
+        
         self.q_proj_weight = nn.Parameter(q_proj_weight)
         self.k_proj_weight = nn.Parameter(k_proj_weight)
         self.v_proj_weight = nn.Parameter(v_proj_weight)

@@ -26,3 +26,14 @@ therapml_cpp.*
 *.toc
 *.lof
 *.lot
+*.pid
+*.pt
+*.env
+*.model
+*.vocab
+**/logs*/
+train*.json
+val*.json
+train*.txt
+val*.txt
+*.cache.*

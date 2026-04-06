@@ -1,5 +1,4 @@
 {
-    "python-envs.pythonProjects": [],
     "python.testing.pytestArgs": [
         "tests"
     ],
