@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-import sentencepiece as spm
+import matplotlib.pyplot as plt
 import torch
 
 from therapml.transformer.my_llama.library.train_utils import estimate_loss, get_batch, get_lr
@@ -12,8 +12,15 @@ BASE_DIR = Path(__file__).resolve().parent
 LOGS_DIR = BASE_DIR / "logs"
 TRAIN_PATH = BASE_DIR / "tiny_stories" / "train.json"
 VAL_PATH = BASE_DIR / "tiny_stories" / "val.json"
+TOKENIZER_META_PATH = LOGS_DIR / "tokenizer_config.json"
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+
+TOKENIZER_CONFIG = {
+    # Options: "hf_bpe", "sentencepiece"
+    "backend": "hf_bpe",
+    "vocab_size": 2000,
+}
 
 MODEL_CONFIG = {
     "context_length": 256,
@@ -27,13 +34,14 @@ MODEL_CONFIG = {
 TRAIN_CONFIG = {
     "batch_size": 4,
     "learning_rate": 3e-5,
-    "min_lr": 3e-5,
+    "min_lr": 3e-8,
     "warmup_iters": 200,
     "weight_decay": 0.1,
     "grad_clip": 1.0,
     "max_iters": 5000,
     "eval_interval": 100,
     "eval_iters": 200,
+    "use_early_stopping": False,
     "patience": 8,
     "min_delta": 1e-3,
     "vocab_size": 2000,
@@ -64,12 +72,49 @@ def load_text_data():
     return train_text, val_text
 
 
+class _SentencePieceWrapper:
+    def __init__(self, processor):
+        self.processor = processor
+
+    def encode(self, text: str) -> list[int]:
+        return self.processor.encode(text, out_type=int)
+
+    def decode(self, ids: list[int]) -> str:
+        return self.processor.decode(ids)
+
+    def bos_id(self) -> int:
+        return self.processor.bos_id() if self.processor.bos_id() >= 0 else self.processor.unk_id()
+
+    def eos_id(self) -> int | None:
+        return self.processor.eos_id() if self.processor.eos_id() >= 0 else None
+
+
+class _HFBPEWrapper:
+    def __init__(self, tokenizer):
+        self.tokenizer = tokenizer
+
+    def encode(self, text: str) -> list[int]:
+        return self.tokenizer.encode(text).ids
+
+    def decode(self, ids: list[int]) -> str:
+        return self.tokenizer.decode(ids, skip_special_tokens=True)
+
+    def bos_id(self) -> int:
+        bos = self.tokenizer.token_to_id("<s>")
+        unk = self.tokenizer.token_to_id("<unk>")
+        if bos is None and unk is None:
+            raise ValueError("Tokenizer is missing both <s> and <unk> special tokens")
+        return bos if bos is not None else unk
+
+    def eos_id(self) -> int | None:
+        return self.tokenizer.token_to_id("</s>")
+
+
 def build_tokenizer_and_tensors(train_text, val_text, vocab_size):
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
     train_txt_path = LOGS_DIR / "train.txt"
     val_txt_path = LOGS_DIR / "val.txt"
-    spm_prefix = LOGS_DIR / "spm"
 
     with train_txt_path.open("w", encoding="utf-8") as file:
         file.write(train_text)
@@ -77,24 +122,73 @@ def build_tokenizer_and_tensors(train_text, val_text, vocab_size):
     with val_txt_path.open("w", encoding="utf-8") as file:
         file.write(val_text)
 
-    spm.SentencePieceTrainer.Train(
-        input=str(train_txt_path),
-        model_prefix=str(spm_prefix),
-        vocab_size=vocab_size,
-        model_type="bpe",
+    backend = TOKENIZER_CONFIG["backend"]
+    if backend == "sentencepiece":
+        import sentencepiece as spm
+
+        spm_prefix = LOGS_DIR / "spm"
+        spm.SentencePieceTrainer.Train(
+            input=str(train_txt_path),
+            model_prefix=str(spm_prefix),
+            vocab_size=vocab_size,
+            model_type="bpe",
+        )
+
+        processor = spm.SentencePieceProcessor()
+        processor.Load(str(spm_prefix) + ".model")
+        tokenizer = _SentencePieceWrapper(processor)
+    elif backend == "hf_bpe":
+        try:
+            from tokenizers import Tokenizer
+            from tokenizers import decoders
+            from tokenizers import models
+            from tokenizers import pre_tokenizers
+            from tokenizers import trainers
+        except ImportError as exc:
+            raise ImportError(
+                "HF BPE backend requires `tokenizers`. Install with: pip install tokenizers"
+            ) from exc
+
+        tokenizer_raw = Tokenizer(models.BPE(unk_token="<unk>"))
+        tokenizer_raw.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
+        tokenizer_raw.decoder = decoders.ByteLevel()
+        trainer = trainers.BpeTrainer(
+            vocab_size=vocab_size,
+            special_tokens=["<unk>", "<s>", "</s>"],
+        )
+        tokenizer_raw.train([str(train_txt_path)], trainer)
+        tokenizer_raw.save(str(LOGS_DIR / "bpe_tokenizer.json"))
+        tokenizer = _HFBPEWrapper(tokenizer_raw)
+    else:
+        raise ValueError(f"Unknown tokenizer backend: {backend}")
+
+    bos_id = tokenizer.bos_id()
+    eos_id = tokenizer.eos_id()
+
+    train_ids = tokenizer.encode(train_text)
+    val_ids = tokenizer.encode(val_text)
+
+    if bos_id is not None:
+        train_ids = [bos_id] + train_ids
+        val_ids = [bos_id] + val_ids
+    if eos_id is not None:
+        train_ids = train_ids + [eos_id]
+        val_ids = val_ids + [eos_id]
+
+    train_data = torch.tensor(train_ids, dtype=torch.long)
+    val_data = torch.tensor(val_ids, dtype=torch.long)
+
+    TOKENIZER_META_PATH.write_text(
+        json.dumps(
+            {
+                "backend": backend,
+                "vocab_size": vocab_size,
+                "tokenizer_file": "bpe_tokenizer.json" if backend == "hf_bpe" else "spm.model",
+            }
+        ),
+        encoding="utf-8",
     )
 
-    tokenizer = spm.SentencePieceProcessor()
-    tokenizer.Load(str(spm_prefix) + ".model")
-
-    train_data = torch.tensor(
-        tokenizer.encode(train_text, out_type=int, add_bos=True, add_eos=True),
-        dtype=torch.long,
-    )
-    val_data = torch.tensor(
-        tokenizer.encode(val_text, out_type=int, add_bos=True, add_eos=True),
-        dtype=torch.long,
-    )
     return tokenizer, train_data, val_data
 
 
@@ -105,7 +199,7 @@ def main():
     tokenizer, train_data, val_data = build_tokenizer_and_tensors(
         train_text,
         val_text,
-        TRAIN_CONFIG["vocab_size"],
+        TOKENIZER_CONFIG["vocab_size"],
     )
 
     model = Llama(
@@ -125,13 +219,18 @@ def main():
         weight_decay=TRAIN_CONFIG["weight_decay"],
     )
 
-    bos_id = tokenizer.bos_id() if tokenizer.bos_id() >= 0 else tokenizer.unk_id()
-    eos_id = tokenizer.eos_id() if tokenizer.eos_id() >= 0 else None
+    bos_id = tokenizer.bos_id()
+    eos_id = tokenizer.eos_id()
 
     best_val_loss = float("inf")
-    best_state = None
+    best_eval_state = None
+    best_train_loss = float("inf")
+    best_train_state = None
     patience_counter = 0
     loss_log_lines = []
+    eval_steps = []
+    train_losses = []
+    val_losses = []
 
     for step in range(TRAIN_CONFIG["max_iters"]):
         lr = get_lr(
@@ -157,9 +256,13 @@ def main():
             train_loss = losses["train"].item()
             val_loss = losses["val"].item()
 
+            if train_loss < best_train_loss - TRAIN_CONFIG["min_delta"]:
+                best_train_loss = train_loss
+                best_train_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+
             if val_loss < best_val_loss - TRAIN_CONFIG["min_delta"]:
                 best_val_loss = val_loss
-                best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+                best_eval_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
                 patience_counter = 0
             else:
                 patience_counter += 1
@@ -170,8 +273,11 @@ def main():
             )
             print(line)
             loss_log_lines.append(line)
+            eval_steps.append(step)
+            train_losses.append(train_loss)
+            val_losses.append(val_loss)
 
-            if patience_counter >= TRAIN_CONFIG["patience"]:
+            if TRAIN_CONFIG["use_early_stopping"] and patience_counter >= TRAIN_CONFIG["patience"]:
                 stop_msg = (
                     f"early stopping at step {step} "
                     f"(no val improvement for {TRAIN_CONFIG['patience']} evals)"
@@ -207,11 +313,15 @@ def main():
             print(sample_line)
             loss_log_lines.append(sample_line)
 
-    if best_state is not None:
-        model.load_state_dict(best_state)
-        model.to(device=DEVICE)
+    if best_train_state is not None:
+        torch.save(best_train_state, LOGS_DIR / "mini_llama_best_train.pt")
 
-    torch.save(model.state_dict(), LOGS_DIR / "mini_llama_best.pt")
+    if best_eval_state is not None:
+        torch.save(best_eval_state, LOGS_DIR / "mini_llama_best_eval.pt")
+        # Backward-compatible filename: keep writing eval-best weights here.
+        torch.save(best_eval_state, LOGS_DIR / "mini_llama_best.pt")
+        model.load_state_dict(best_eval_state)
+        model.to(device=DEVICE)
 
     context = torch.tensor([[bos_id]], dtype=torch.long, device=DEVICE)
 
@@ -226,6 +336,20 @@ def main():
     print(generated_text)
 
     (LOGS_DIR / "loss_log.txt").write_text("\n".join(loss_log_lines) + "\n", encoding="utf-8")
+
+    if eval_steps:
+        plt.figure(figsize=(9, 5))
+        plt.plot(eval_steps, train_losses, label="train loss", linewidth=2)
+        plt.plot(eval_steps, val_losses, label="val loss", linewidth=2)
+        plt.xlabel("Step")
+        plt.ylabel("Loss")
+        plt.title("Training Curves")
+        plt.grid(True, alpha=0.3)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(LOGS_DIR / "loss_curves.png", dpi=150)
+        plt.close()
+
     (LOGS_DIR / "generated.txt").write_text(generated_text + "\n", encoding="utf-8")
 
 
