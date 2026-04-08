@@ -12,6 +12,7 @@ from therapml.training.dropout import Dropout
 from therapml.training.normalizers import LayerNorm, RMSNorm
 from therapml.transformer import RoPE, SelfAttention, MultiHeadSelfAttention, MultiHeadSelfAttentionWithRope
 from therapml.transformer.my_llama.library.layers import TransformerBlock
+from therapml.transformer.my_llama.model import Llama
 
 def run_tensor_multiply(arr1: Float[list, "b x y"], arr2: Float[list, "b y z"]) -> Float[list, "b x z"]:
     a = np.ascontiguousarray(arr1, dtype=np.float64)
@@ -92,7 +93,7 @@ def run_layernorm(
 
 
 def run_rmsnorm(input: Float[Tensor, "batch ..."], gamma: Float[Tensor, "batch ..."]) -> Float[Tensor, "batch ..."]:
-    rms_norm = RMSNorm(gamma=gamma)
+    rms_norm = RMSNorm(gamma=gamma, eps=1e-5)
     return rms_norm(input)
 
 
@@ -230,105 +231,16 @@ def run_transformer_block(
         Float[Tensor, "batch sequence_length d_model"] Tensor with the output of
         running the Transformer block on the input features while using RoPE.
     """
-    import torch
-    import torch.nn.functional as F
-    import math
-    
-    batch_size, seq_len, _ = in_features.shape
-    
-    # Extract weights
-    ln1_weight = weights["ln1.weight"]
-    ln2_weight = weights["ln2.weight"]
-    q_proj_weight = weights["attn.q_proj.weight"]
-    k_proj_weight = weights["attn.k_proj.weight"]
-    v_proj_weight = weights["attn.v_proj.weight"]
-    o_proj_weight = weights["attn.output_proj.weight"]
-    w1_weight = weights["ffn.w1.weight"]
-    w2_weight = weights["ffn.w2.weight"]
-    w3_weight = weights["ffn.w3.weight"]
-    
-    head_dim = d_model // num_heads
-    
-    # First LayerNorm (RMSNorm)
-    x = in_features
-    rms = torch.sqrt(x.pow(2).mean(dim=-1, keepdim=True) + 1e-8)
-    x_norm = (x / rms) * ln1_weight
-    
-    # Attention with RoPE
-    # Project to Q, K, V
-    Q = x_norm @ q_proj_weight.T  # (batch, seq_len, d_model)
-    K = x_norm @ k_proj_weight.T  # (batch, seq_len, d_model)
-    V = x_norm @ v_proj_weight.T  # (batch, seq_len, d_model)
-    
-    # Split heads
-    Q = Q.view(batch_size, seq_len, num_heads, head_dim).transpose(1, 2)  # (batch, num_heads, seq_len, head_dim)
-    K = K.view(batch_size, seq_len, num_heads, head_dim).transpose(1, 2)
-    V = V.view(batch_size, seq_len, num_heads, head_dim).transpose(1, 2)
-    
-    # Apply RoPE
-    rope = RoPE(head_dim, theta, ctx_len)
-    token_positions = torch.arange(seq_len, device=in_features.device, dtype=torch.long).unsqueeze(0).expand(batch_size, -1)
-    
-    # Reshape for rope: (batch, num_heads, seq_len, head_dim) -> (batch*num_heads, seq_len, head_dim)
-    B, H, S, D = Q.shape
-    Q_rope = Q.reshape(B * H, S, D)
-    K_rope = K.reshape(B * H, S, D)
-    
-    # Expand positions for all heads
-    positions = token_positions.expand(B, -1).repeat_interleave(H, dim=0)
-    
-    Q_rope = rope(Q_rope, positions)
-    K_rope = rope(K_rope, positions)
-    
-    # Reshape back
-    Q = Q_rope.reshape(B, H, S, D)
-    K = K_rope.reshape(B, H, S, D)
-    
-    # Scaled dot-product attention
-    scale = math.sqrt(head_dim)
-    scores = (Q @ K.transpose(-2, -1)) / scale
-    
-    # Causal mask
-    mask = torch.triu(
-        torch.ones(seq_len, seq_len, device=scores.device, dtype=torch.bool),
-        diagonal=1
+
+    transformer_block = TransformerBlock(
+        d_model=d_model,
+        num_heads=num_heads,
+        d_ff=d_ff,
+        ctx_len=ctx_len,
+        theta=theta,
+        weights=weights
     )
-    scores = scores.masked_fill(mask.unsqueeze(0).unsqueeze(0), float('-inf'))
-    
-    # Softmax
-    attention_weights = F.softmax(scores, dim=-1)
-    
-    # Apply attention to V
-    attn_out = attention_weights @ V  # (batch, num_heads, seq_len, head_dim)
-    
-    # Merge heads
-    attn_out = attn_out.transpose(1, 2).contiguous()  # (batch, seq_len, num_heads, head_dim)
-    attn_out = attn_out.view(batch_size, seq_len, d_model)
-    
-    # Output projection
-    attn_out = attn_out @ o_proj_weight.T
-    
-    # First residual
-    x = in_features + attn_out
-    
-    # Second LayerNorm (RMSNorm)
-    rms = torch.sqrt(x.pow(2).mean(dim=-1, keepdim=True) + 1e-8)
-    x_norm = (x / rms) * ln2_weight
-    
-    # Feed-forward (SwiGLU)
-    w1_out = x_norm @ w1_weight.T  # (batch, seq_len, d_ff)
-    w3_out = x_norm @ w3_weight.T  # (batch, seq_len, d_ff)
-    
-    # Apply SiLU to w3
-    gate = F.silu(w3_out)
-    combined = gate * w1_out
-    
-    ffn_out = combined @ w2_weight.T  # (batch, seq_len, d_model)
-    
-    # Second residual
-    output = x + ffn_out
-    
-    return output
+    return transformer_block(in_features)
 
 def run_transformer_lm(
     vocab_size: int,
@@ -412,4 +324,14 @@ def run_transformer_lm(
         Float[Tensor, "batch_size sequence_length vocab_size"]: Tensor with the predicted unnormalized
         next-word distribution for each token.
     """
-    raise NotImplementedError
+    llama = Llama(
+        vocab_size=vocab_size,
+        context_length=context_length,
+        d_model=d_model,
+        num_layers=num_layers,
+        num_heads=num_heads,
+        d_ff=d_ff,
+        rope_theta=rope_theta,
+        weights=weights,
+    )
+    return llama(in_indices)

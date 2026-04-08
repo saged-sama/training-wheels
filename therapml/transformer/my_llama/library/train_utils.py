@@ -1,6 +1,7 @@
 import math
 
 import torch
+from therapml.training.loss import CrossEntropyLoss
 
 
 def get_batch(data, batch_size, block_size, device):

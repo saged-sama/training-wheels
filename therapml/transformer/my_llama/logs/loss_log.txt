@@ -1,19 +1,53 @@
-step 0: train loss 7.7787, val loss 7.7660, best val 7.7660, lr 1.50e-06
-step 100: train loss 6.5183, val loss 6.6287, best val 6.6287, lr 1.51e-04
-step 200: train loss 5.5249, val loss 5.7611, best val 5.7611, lr 3.00e-04
-step 300: train loss 4.8726, val loss 5.2727, best val 5.2727, lr 3.00e-04
-step 400: train loss 4.4187, val loss 4.9969, best val 4.9969, lr 2.99e-04
-step 500: train loss 4.0858, val loss 4.8329, best val 4.8329, lr 2.97e-04
-step 600: train loss 3.8434, val loss 4.7616, best val 4.7616, lr 2.95e-04
-step 700: train loss 3.6212, val loss 4.7128, best val 4.7128, lr 2.93e-04
-step 800: train loss 3.4451, val loss 4.6832, best val 4.6832, lr 2.90e-04
-step 900: train loss 3.2990, val loss 4.6566, best val 4.6566, lr 2.86e-04
-step 1000: train loss 3.1505, val loss 4.6556, best val 4.6566, lr 2.82e-04
-step 1100: train loss 3.0154, val loss 4.7125, best val 4.6566, lr 2.77e-04
-step 1200: train loss 2.8910, val loss 4.6933, best val 4.6566, lr 2.72e-04
-step 1300: train loss 2.7705, val loss 4.7358, best val 4.6566, lr 2.66e-04
-step 1400: train loss 2.6407, val loss 4.7664, best val 4.6566, lr 2.60e-04
-step 1500: train loss 2.5139, val loss 4.8572, best val 4.6566, lr 2.54e-04
-step 1600: train loss 2.4019, val loss 4.8351, best val 4.6566, lr 2.47e-04
-step 1700: train loss 2.2915, val loss 4.9222, best val 4.6566, lr 2.40e-04
-early stopping at step 1700 (no val improvement for 8 evals)
+step 0: train loss 7.7478, val loss 7.7517, best val 7.7517, lr 1.50e-07
+sample step 0: !". were todayon amazing topush ab SuddenlyeirstruptHi choreass bushesdoughpty windYesway wor monster al shinylesmemberrayakaring printaking toughonesch embarrassedthached and neededoke broke Sam showing finollayakily present door mind laughppeared storiesfortqoon wordsark second intoirt rainstWh welcom place mount own always deep sneezeowostcross lostHellooon rabbit knew side explainingday turns backyardpt disgusting relieved dinner Charlie pa sc everywhereain There haveore giggled and
+step 100: train loss 7.5838, val loss 7.6087, best val 7.6087, lr 1.52e-05
+step 200: train loss 7.0740, val loss 7.1457, best val 7.1457, lr 3.00e-05
+step 300: train loss 6.4866, val loss 6.6041, best val 6.6041, lr 3.00e-05
+step 400: train loss 6.1163, val loss 6.2570, best val 6.2570, lr 3.00e-05
+step 500: train loss 5.8106, val loss 5.9934, best val 5.9934, lr 3.00e-05
+sample step 500: teddyassedow loud closeders standingance ways tail!". shelvesuck fr wagocked on the his hours drewient said alwaysap warrior timelect back loudself betweengn naughtya giveuelily saw this hands magnetied happily crab on.p named surprised saw this of colorful said, " at the Charlie fun.aut on park she swimming to the fun Oliver play When. place, "Let. He was justour and it in we music. One again together, and the called. Theyet,
+step 600: train loss 5.5719, val loss 5.7864, best val 5.7864, lr 3.00e-05
+step 700: train loss 5.3772, val loss 5.6450, best val 5.6450, lr 3.00e-05
+step 800: train loss 5.2203, val loss 5.5286, best val 5.5286, lr 3.00e-05
+step 900: train loss 5.0715, val loss 5.4356, best val 5.4356, lr 3.00e-05
+step 1000: train loss 4.9588, val loss 5.3442, best val 5.3442, lr 3.00e-05
+sample step 1000: and the park. The. She was so it was a little girl the other. She on to so happy. The felt the the forest. She was a time, " toy. The it went to the there was a big you of's. She The to the animals it was happy. The little girl and saw a time, the kitty and said, she and. He wanted to for a big, the it was so. She was it in the bird was and,. He it
+step 1100: train loss 4.8198, val loss 5.2639, best val 5.2639, lr 3.00e-05
+step 1200: train loss 4.7292, val loss 5.2200, best val 5.2200, lr 3.00e-05
+step 1300: train loss 4.6277, val loss 5.1587, best val 5.1587, lr 3.00e-05
+step 1400: train loss 4.5204, val loss 5.0980, best val 5.0980, lr 3.00e-05
+step 1500: train loss 4.4463, val loss 5.0438, best val 5.0438, lr 3.00e-05
+sample step 1500: it. Once, and was a big, "I very happy. They all's at it and went to be they were not so happy. "Thank. One day, "Let." She went to the best, the park. She was a big, "No, "Don saw for the forest. He said, "No, she wanted to be so play with she saw a big, "I't it was not from the park. She One day, but it. As
+step 1600: train loss 4.3517, val loss 5.0150, best val 5.0150, lr 3.00e-05
+step 1700: train loss 4.2644, val loss 4.9848, best val 4.9848, lr 3.00e-05
+step 1800: train loss 4.1601, val loss 4.9459, best val 4.9459, lr 3.00e-05
+step 1900: train loss 4.0835, val loss 4.8905, best val 4.8905, lr 3.00e-05
+step 2000: train loss 4.0113, val loss 4.8666, best val 4.8666, lr 3.00e-05
+sample step 2000: so he all. Then, of a big and the mushroom and the snow to see, and a time to the boat was very happy. He was a time, there could on. The new friend was a big, there was a big but the snow. Once upon a time, there was a little boy named Tim wanted to not looked at the animals it. They saw a time, there was a new friend to play with her. She found a time, and they were happy. It was
+step 2100: train loss 3.9206, val loss 4.8234, best val 4.8234, lr 3.00e-05
+step 2200: train loss 3.8301, val loss 4.8079, best val 4.8079, lr 3.00e-05
+step 2300: train loss 3.7834, val loss 4.7961, best val 4.7961, lr 3.00e-05
+step 2400: train loss 3.7189, val loss 4.7685, best val 4.7685, lr 3.00e-05
+step 2500: train loss 3.6567, val loss 4.7510, best val 4.7510, lr 3.00e-05
+sample step 2500: you, "Hello, so, he had so happy to play from the park the park with her toys. She wanted to find it, it and the lake. One day, the park she was a little girl named I in his to the park, and his friends. He was full. He was happy and asked. They played together, and asked his special. Sue said, "Yes, "What's house. Then, the animals in the cat had a big, I can play
+step 2600: train loss 3.5881, val loss 4.7433, best val 4.7433, lr 3.00e-05
+step 2700: train loss 3.5193, val loss 4.7462, best val 4.7433, lr 3.00e-05
+step 2800: train loss 3.4768, val loss 4.7334, best val 4.7334, lr 3.00e-05
+step 2900: train loss 3.4145, val loss 4.7351, best val 4.7334, lr 3.00e-05
+step 3000: train loss 3.3735, val loss 4.7330, best val 4.7334, lr 3.00e-05
+sample step 3000: . When, he had a big, and had a little girl named Amy. He wanted to the bunny was very careful not her. He took a big tree and to him. The little girl named The kitty. It was so much. He put the special. Lily and wanted to go to play with her. When they got the park back to the sun was very happy. Once upon a time, in her. Lucy. One day, there was a big park. She was very very proud
+step 3100: train loss 3.3041, val loss 4.7343, best val 4.7334, lr 3.00e-05
+step 3200: train loss 3.2641, val loss 4.7353, best val 4.7334, lr 3.00e-05
+step 3300: train loss 3.1949, val loss 4.7355, best val 4.7334, lr 3.00e-05
+step 3400: train loss 3.1500, val loss 4.7265, best val 4.7265, lr 3.00e-05
+step 3500: train loss 3.1128, val loss 4.7449, best val 4.7265, lr 3.00e-05
+sample step 3500: and. The away a little girl named Tim was so so happy. She had a voice and looked a big, the big cherry boy named it is to the bird was very happy. He had a big hug and smiled with it. Tim was always loved to her. It was not go." Tim saw a big, and it for his face. The new friend said, "I! One day, a big hug and it, and took the park to the story. It was very special she
+step 3600: train loss 3.0585, val loss 4.7605, best val 4.7265, lr 3.00e-05
+step 3700: train loss 2.9840, val loss 4.7560, best val 4.7265, lr 3.00e-05
+step 3800: train loss 2.9709, val loss 4.7539, best val 4.7265, lr 3.00e-05
+step 3900: train loss 2.9047, val loss 4.7687, best val 4.7265, lr 3.00e-05
+step 4000: train loss 2.8443, val loss 4.7538, best val 4.7265, lr 3.00e-05
+sample step 4000: again and they were the other friends was that they took some. Once upon a time, there was a while, there was a little girl named Tim. One day, she was a big, very excited. Tim was a boy named Tim was time. Tim saw a little girl named Tim to play with to the garden. Tim picked. He loved to the birds outside. Tim went to the park to the park to the park. Tim was happy." Tim decided to play together and his friend.
+step 4100: train loss 2.8145, val loss 4.7576, best val 4.7265, lr 3.00e-05
+step 4200: train loss 2.7568, val loss 4.7874, best val 4.7265, lr 3.00e-05
+early stopping at step 4200 (no val improvement for 8 evals)

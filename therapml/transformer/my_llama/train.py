@@ -6,7 +6,7 @@ import torch
 
 from therapml.transformer.my_llama.library.train_utils import estimate_loss, get_batch, get_lr
 from therapml.transformer.my_llama.model import Llama
-
+from therapml.training.adam import AdamW
 
 BASE_DIR = Path(__file__).resolve().parent
 LOGS_DIR = BASE_DIR / "logs"
@@ -16,16 +16,17 @@ VAL_PATH = BASE_DIR / "tiny_stories" / "val.json"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 MODEL_CONFIG = {
-    "dim": 128,
+    "context_length": 256,
+    "d_model": 128,
     "num_layers": 4,
     "num_heads": 4,
-    "block_size": 256,
-    "dropout": 0.2,
+    "d_ff": 512,
+    "rope_theta": 10000.0,
 }
 
 TRAIN_CONFIG = {
     "batch_size": 4,
-    "learning_rate": 3e-4,
+    "learning_rate": 3e-5,
     "min_lr": 3e-5,
     "warmup_iters": 200,
     "weight_decay": 0.1,
@@ -43,6 +44,11 @@ SAMPLING_CONFIG = {
     "max_new_tokens": 400,
     "temperature": 0.8,
     "top_k": 40,
+}
+
+SAMPLE_CONFIG = {
+    "interval": 500,
+    "max_new_tokens": 100,
 }
 
 
@@ -102,12 +108,25 @@ def main():
         TRAIN_CONFIG["vocab_size"],
     )
 
-    model = Llama(vocab_size=TRAIN_CONFIG["vocab_size"], **MODEL_CONFIG).to(device=DEVICE)
-    optimizer = torch.optim.AdamW(
+    model = Llama(
+        vocab_size=TRAIN_CONFIG["vocab_size"],
+        context_length=MODEL_CONFIG["context_length"],
+        d_model=MODEL_CONFIG["d_model"],
+        num_layers=MODEL_CONFIG["num_layers"],
+        num_heads=MODEL_CONFIG["num_heads"],
+        d_ff=MODEL_CONFIG["d_ff"],
+        rope_theta=MODEL_CONFIG["rope_theta"],
+        weights=None,
+    ).to(device=DEVICE)
+
+    optimizer = AdamW(
         model.parameters(),
         lr=TRAIN_CONFIG["learning_rate"],
         weight_decay=TRAIN_CONFIG["weight_decay"],
     )
+
+    bos_id = tokenizer.bos_id() if tokenizer.bos_id() >= 0 else tokenizer.unk_id()
+    eos_id = tokenizer.eos_id() if tokenizer.eos_id() >= 0 else None
 
     best_val_loss = float("inf")
     best_state = None
@@ -132,7 +151,7 @@ def main():
                 val_data,
                 TRAIN_CONFIG["eval_iters"],
                 TRAIN_CONFIG["batch_size"],
-                MODEL_CONFIG["block_size"],
+                MODEL_CONFIG["context_length"],
                 DEVICE,
             )
             train_loss = losses["train"].item()
@@ -164,7 +183,7 @@ def main():
         xb, yb = get_batch(
             train_data,
             TRAIN_CONFIG["batch_size"],
-            MODEL_CONFIG["block_size"],
+            MODEL_CONFIG["context_length"],
             DEVICE,
         )
         _, loss = model(xb, yb)
@@ -173,14 +192,27 @@ def main():
         torch.nn.utils.clip_grad_norm_(model.parameters(), TRAIN_CONFIG["grad_clip"])
         optimizer.step()
 
+        if step % SAMPLE_CONFIG["interval"] == 0:
+            with torch.no_grad():
+                sample_context = torch.tensor([[bos_id]], dtype=torch.long, device=DEVICE)
+                sample_ids = model.generate(
+                    sample_context,
+                    max_new_tokens=SAMPLE_CONFIG["max_new_tokens"],
+                    temperature=SAMPLING_CONFIG["temperature"],
+                    top_k=SAMPLING_CONFIG["top_k"],
+                    eos_id=eos_id,
+                )[0].tolist()
+                sample_text = tokenizer.decode(sample_ids)
+            sample_line = f"sample step {step}: {sample_text}"
+            print(sample_line)
+            loss_log_lines.append(sample_line)
+
     if best_state is not None:
         model.load_state_dict(best_state)
         model.to(device=DEVICE)
 
     torch.save(model.state_dict(), LOGS_DIR / "mini_llama_best.pt")
 
-    bos_id = tokenizer.bos_id() if tokenizer.bos_id() >= 0 else tokenizer.unk_id()
-    eos_id = tokenizer.eos_id() if tokenizer.eos_id() >= 0 else None
     context = torch.tensor([[bos_id]], dtype=torch.long, device=DEVICE)
 
     generated_ids = model.generate(

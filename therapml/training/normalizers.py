@@ -6,8 +6,8 @@ from jaxtyping import Float
 class LayerNorm(nn.Module):
     def __init__(self, gamma: Float[Tensor, "batch ..."], beta: Float[Tensor, "batch ..."], eps: float = 1e-8):
         super().__init__()
-        self.gamma = gamma
-        self.beta = beta
+        self.gamma = nn.Parameter(gamma.clone().detach())
+        self.beta = nn.Parameter(beta.clone().detach())
         self.eps = eps
     
     def forward(self, x: Float[Tensor, "batch ..."]):
@@ -21,7 +21,7 @@ class LayerNorm(nn.Module):
 class RMSNorm(nn.Module):
     def __init__(self, gamma: Float[Tensor, "batch ..."], eps: float = 1e-8):
         super().__init__()
-        self.gamma = gamma
+        self.gamma = nn.Parameter(gamma.clone().detach())
         self.eps = eps
     
     def forward(self, x: Float[Tensor, "batch ..."]):

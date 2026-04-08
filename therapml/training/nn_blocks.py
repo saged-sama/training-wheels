@@ -75,9 +75,9 @@ class SwiGLU(nn.Module):
         super().__init__()
         self.d_model = d_model
         self.d_ff = d_ff
-        self.w1_weight = w1_weight
-        self.w2_weight = w2_weight
-        self.w3_weight = w3_weight
+        self.w1_weight = nn.Parameter(w1_weight.clone().detach())
+        self.w2_weight = nn.Parameter(w2_weight.clone().detach())
+        self.w3_weight = nn.Parameter(w3_weight.clone().detach())
     
     def forward(self, x):
         gate = x @ self.w1_weight.T
