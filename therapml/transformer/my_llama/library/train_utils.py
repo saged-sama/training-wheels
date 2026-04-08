@@ -15,10 +15,17 @@ def get_lr(step, learning_rate, min_lr, warmup_iters, max_iters):
     if step < warmup_iters:
         return learning_rate * (step + 1) / warmup_iters
 
-    if step > max_iters:
+    if max_iters <= warmup_iters:
         return min_lr
 
-    decay_ratio = (step - warmup_iters) / (max_iters - warmup_iters)
+    if step >= max_iters - 1:
+        return min_lr
+
+    decay_steps = max_iters - warmup_iters - 1
+    if decay_steps <= 0:
+        return min_lr
+
+    decay_ratio = (step - warmup_iters) / decay_steps
     decay_ratio = min(max(decay_ratio, 0.0), 1.0)
     coeff = 0.5 * (1.0 + math.cos(math.pi * decay_ratio))
     return min_lr + coeff * (learning_rate - min_lr)

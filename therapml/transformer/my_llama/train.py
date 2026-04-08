@@ -231,6 +231,7 @@ def main():
     eval_steps = []
     train_losses = []
     val_losses = []
+    learning_rates = []
 
     for step in range(TRAIN_CONFIG["max_iters"]):
         lr = get_lr(
@@ -276,6 +277,7 @@ def main():
             eval_steps.append(step)
             train_losses.append(train_loss)
             val_losses.append(val_loss)
+            learning_rates.append(lr)
 
             if TRAIN_CONFIG["use_early_stopping"] and patience_counter >= TRAIN_CONFIG["patience"]:
                 stop_msg = (
@@ -311,7 +313,6 @@ def main():
                 sample_text = tokenizer.decode(sample_ids)
             sample_line = f"sample step {step}: {sample_text}"
             print(sample_line)
-            loss_log_lines.append(sample_line)
 
     if best_train_state is not None:
         torch.save(best_train_state, LOGS_DIR / "mini_llama_best_train.pt")
@@ -348,6 +349,17 @@ def main():
         plt.legend()
         plt.tight_layout()
         plt.savefig(LOGS_DIR / "loss_curves.png", dpi=150)
+        plt.close()
+
+        plt.figure(figsize=(9, 5))
+        plt.plot(eval_steps, learning_rates, label="learning rate", linewidth=2, color="tab:orange")
+        plt.xlabel("Step")
+        plt.ylabel("Learning Rate")
+        plt.title("Learning Rate Schedule")
+        plt.grid(True, alpha=0.3)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(LOGS_DIR / "lr_curves.png", dpi=150)
         plt.close()
 
     (LOGS_DIR / "generated.txt").write_text(generated_text + "\n", encoding="utf-8")
